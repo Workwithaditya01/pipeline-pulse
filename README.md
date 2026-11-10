@@ -1,6 +1,25 @@
-# Pipeline Pulse — Local-first CI/CD with GitHub Actions & Docker
+# Pipeline Pulse — CI/CD with GitHub Actions, Docker & kind
 
-Pipeline Pulse is a polished, responsive dashboard used to demonstrate a complete CI/CD workflow without requiring a cloud server. GitHub Actions runs tests, builds a Docker image, and publishes it to Docker Hub. You can then pull and run that image on your own machine.
+![GitHub Actions](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)
+![Docker](https://img.shields.io/badge/Container-Docker-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Deploy-kind-326CE5?logo=kubernetes&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
+
+Pipeline Pulse is a small Node.js dashboard app built to demonstrate a **complete CI/CD pipeline with no cloud spend**. Every push to `main` triggers GitHub Actions, which runs the tests, builds a Docker image, and pushes it to Docker Hub. The published image is then pulled and run locally with Docker or on a local [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker) cluster.
+
+## Project Links
+
+| Deliverable | Link |
+|---|---|
+| GitHub repository | https://github.com/Workwithaditya01/pipeline-pulse |
+| Docker image | https://hub.docker.com/r/adityasondekar/pipeline-pulse |
+| CI/CD workflow runs | https://github.com/Workwithaditya01/pipeline-pulse/actions |
+
+## Objective
+
+Set up a full CI/CD pipeline that builds a Docker image, runs tests, and deploys locally.
+
+**Tools used:** GitHub Actions, Docker, Docker Compose, Docker Hub (free tier), kind, kubectl
 
 ## Architecture
 
@@ -18,126 +37,234 @@ Developer push / pull request
       |          |
    Stop      Build image
                  |
-        Push on main branch
+        Push (main branch only)
                  |
              Docker Hub
                  |
         Pull image locally
-                 |
-           localhost:3000
+          /            \
+   Docker run          kind
+ (localhost:3000)   (2 replicas, NodePort)
 ```
 
 ## Features
 
-- Responsive dark dashboard UI.
-- Node.js HTTP server with `/health` endpoint.
-- Three automated tests using Node's built-in test runner.
-- Dockerfile runs as a non-root user and includes a health check.
-- Docker Compose for one-command local deployment.
-- GitHub Actions tests pull requests and pushes; publishes Docker images only after a successful push to `main`.
+- Responsive dark dashboard UI served by a dependency-free Node.js HTTP server
+- `/health` endpoint returning a JSON status, used by Docker and Kubernetes health checks
+- 3 automated tests using Node's built-in test runner (`node --test`)
+- Dockerfile based on `node:22-alpine`, runs as a **non-root user**, with a built-in `HEALTHCHECK`
+- `docker-compose.yml` for one-command local deployment
+- GitHub Actions workflow: tests on every push and pull request; image publish only on pushes to `main`
+- Kubernetes manifests (`deployment.yaml`, `service.yaml`) with 2 replicas and a readiness probe
+
+## Project Structure
+
+```text
+pipeline-pulse/
+├── .github/workflows/ci-cd.yml   # GitHub Actions pipeline
+├── public/                       # Frontend (index.html, styles.css, app.js)
+├── tests/server.test.js          # Automated tests
+├── server.js                     # Node.js HTTP server
+├── Dockerfile                    # Container image definition
+├── docker-compose.yml            # Local deployment
+├── deployment.yaml               # Kubernetes Deployment (kind)
+├── service.yaml                  # Kubernetes Service (NodePort)
+├── package.json
+└── Pipeline-pulse/               # Deployment screenshots
+```
+
+## CI/CD Pipeline
+
+The workflow in `.github/workflows/ci-cd.yml` has two jobs:
+
+| Job | Runs on | What it does |
+|---|---|---|
+| **Run application tests** | push, pull request, manual | Checks out code, sets up Node.js 22, runs `npm ci` and `npm test` |
+| **Build and push Docker image** | push to `main` only, after tests pass | Logs in to Docker Hub, builds the image with Buildx, pushes `latest` and a commit-SHA tag |
+
+```workflow
+
+name: Pipeline Pulse CI/CD
+
+on:
+  push:
+    branches: [main]
+
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+jobs:
+  # Job 1: Run application tests
+  test:
+    name: Run application tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # Job 2: Build and push Docker image
+  build-and-push:
+    name: Build and push Docker image
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pipeline-pulse:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/pipeline-pulse:${{ github.sha }}
+
+```
+
+### Required GitHub secrets
+
+Add these under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | A Docker Hub access token with Read & Write access (not your password) |
 
 ## Requirements
 
-- Git and a GitHub account.
-- Node.js 22 or later (for local testing).
-- Docker Desktop (Windows/macOS) or Docker Engine + Docker Compose plugin (Linux).
-- A free Docker Hub account.
+- Git and a GitHub account
+- Node.js 22+ (for running tests locally)
+- Docker Desktop, or Docker Engine with the Compose plugin
+- A free Docker Hub account
+- [kind](https://kind.sigs.k8s.io/) and `kubectl` (for the Kubernetes deployment)
 
-## Run locally without Docker
+## Getting Started
+
+### 1. Run locally without Docker
 
 ```bash
 npm test
 npm start
 ```
 
-Open <http://localhost:3000>. Check <http://localhost:3000/health> for the JSON health response.
+Open <http://localhost:3000>. Health check: <http://localhost:3000/health>
 
-## Run with Docker Compose
+### 2. Run with Docker Compose
 
 ```bash
 docker compose up --build -d
 docker compose ps
 ```
 
-Open <http://localhost:3000>. Useful commands:
+Open <http://localhost:3000>. Other useful commands:
 
 ```bash
 docker compose logs -f
 docker compose down
 ```
 
-## GitHub Actions + Docker Hub setup
-
-1. Create a public repository on GitHub named `pipeline-pulse`.
-2. Push this project to the repository's `main` branch.
-3. Create a Docker Hub access token from **Account Settings → Personal access tokens**. Give it Read & Write access.
-4. In GitHub, open **Settings → Secrets and variables → Actions → New repository secret**.
-5. Add these secrets:
-   - `DOCKERHUB_USERNAME`: your Docker Hub username.
-   - `DOCKERHUB_TOKEN`: the Docker Hub access token (not your account password).
-6. Push a commit to `main`, then open the repository's **Actions** tab.
-7. Confirm the test job and build-and-push job both pass. The publish job runs only on pushes to `main`; pull requests run tests but do not publish.
-8. Open Docker Hub and confirm the `pipeline-pulse` repository contains `latest` and a commit-SHA tag.
-
-## Pull and run the published image
-
-Replace `YOUR_DOCKERHUB_USERNAME` with your Docker Hub username:
+### 3. Pull and run the published image from Docker Hub
 
 ```bash
-docker pull YOUR_DOCKERHUB_USERNAME/pipeline-pulse:latest
-docker run -d --name pipeline-pulse -p 3000:3000 --restart unless-stopped YOUR_DOCKERHUB_USERNAME/pipeline-pulse:latest
+docker pull adityasondekar/pipeline-pulse:latest
+docker run -d --name pipeline-pulse -p 3000:3000 --restart unless-stopped adityasondekar/pipeline-pulse:latest
 docker ps
 ```
 
-Visit <http://localhost:3000>. Check the container health:
+Check container health and clean up:
 
 ```bash
 docker inspect --format='{{.State.Health.Status}}' pipeline-pulse
-```
-
-Stop and remove it:
-
-```bash
 docker rm -f pipeline-pulse
 ```
 
-## Minikube option (optional)
-
-If you want to deploy to Minikube instead of Docker directly, start Minikube and use your published image:
+### 4. Deploy to a local Kubernetes cluster with kind
 
 ```bash
-minikube start
-kubectl create deployment pipeline-pulse --image=YOUR_DOCKERHUB_USERNAME/pipeline-pulse:latest
-kubectl expose deployment pipeline-pulse --type=NodePort --port=3000
-kubectl get pods,services
-minikube service pipeline-pulse
+kind create cluster --name pipeline-pulse
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl get pods
+kubectl get services
 ```
 
-This is optional; the project deliverable can be completed with Docker locally.
+The Deployment runs **2 replicas** of `adityasondekar/pipeline-pulse:latest` and uses `/health` as its readiness probe. The Service exposes the app as a `NodePort` on port 3000.
 
-## Suggested screenshots for submission
+kind runs the cluster inside a Docker container, so the NodePort is not reachable directly from your host. Forward the service port to access the app:
 
-1. Pipeline Pulse running at `http://localhost:3000`.
-2. `npm test` showing all 3 tests passing.
-3. `docker compose ps` showing the running container.
-4. GitHub Actions workflow showing successful test and build/push jobs.
-5. Docker Hub repository showing the `latest` image tag.
-6. `docker ps` after pulling and running the published image.
+```bash
+kubectl port-forward service/pipeline-pulse 3000:3000
+```
+
+Open <http://localhost:3000>. Delete the cluster when you are done:
+
+```bash
+kind delete cluster --name pipeline-pulse
+```
+
+## Screenshots
+
+### Deployed application
+![Pipeline Pulse dashboard](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/browser%20screenshot.png)
+
+### GitHub Actions workflow results
+![CI/CD workflow completed](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/CI-CD%20Completed.png)
+
+### Docker Hub image
+![Docker Hub repository](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/DockerHub%20.png)
+
+### Running container (`docker ps`)
+![docker ps](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/Docker%20ps.png)
+
+### kind deployment
+![kubectl get pods](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/kubectl%20get%20pods.png)
+![kubectl get services](https://github.com/Workwithaditya01/pipeline-pulse/blob/78907b9cf6b397f6875e3a683288a22e51659cf4/Screenshots/kubectl%20get%20services.png)
 
 ## Troubleshooting
 
-- **Port 3000 is already in use:** change the left side of the Compose mapping, for example `3001:3000`, then open `http://localhost:3001`.
-- **Docker daemon is not running:** start Docker Desktop or the Docker service, then retry.
-- **Docker Hub login fails:** use the access token as `DOCKERHUB_TOKEN`, not your normal password.
-- **Image push is denied:** verify the username, token permissions, and repository name.
-- **Workflow does not publish:** confirm the branch is `main`, the test job passed, and both GitHub secrets exist.
-- **Container starts but page does not load:** inspect `docker logs pipeline-pulse` and confirm port `3000` is mapped.
+- **Port 3000 already in use:** change the left side of the port mapping (e.g. `3001:3000`) and open `http://localhost:3001`.
+- **Docker daemon not running:** start Docker Desktop or the Docker service and retry.
+- **Docker Hub login fails in CI:** make sure `DOCKERHUB_TOKEN` is an access token, not your account password.
+- **Image push denied:** verify the username, token permissions, and repository name.
+- **Workflow doesn't publish:** confirm you pushed to `main`, the test job passed, and both secrets exist.
+- **`npm ci` fails in CI:** make sure `package-lock.json` is committed.
+- **Pods not ready in kind:** run `kubectl describe pod <pod-name>` and check that the image can be pulled.
+- **App not reachable after deploying to kind:** NodePorts are not exposed to the host by default; use `kubectl port-forward service/pipeline-pulse 3000:3000`.
 
-## Deliverables checklist
+## Deliverables Checklist
 
-- [ ] GitHub repository containing source, Dockerfile, Compose file, and workflow.
-- [ ] Successful test and build/push workflow run.
-- [ ] Public Docker Hub image link.
-- [ ] Image pulled and running locally (or in Minikube).
-- [ ] Screenshots of the deployed application and workflow results.
-# pipeline-pulse
+- [x] GitHub repo with workflows
+- [x] Docker image on Docker Hub
+- [x] CI/CD workflow results
+- [x] Screenshots of the deployed app
+
+## Author
+
+**Aditya Sondekar** — DevOps Intern, Elevate Labs
+GitHub: [@Workwithaditya01](https://github.com/Workwithaditya01) · Docker Hub: [adityasondekar](https://hub.docker.com/u/adityasondekar)
