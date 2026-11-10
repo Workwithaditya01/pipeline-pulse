@@ -1,0 +1,13 @@
+{
+  "name": "pipeline-pulse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A polished demo dashboard for a local-first Docker CI/CD project.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

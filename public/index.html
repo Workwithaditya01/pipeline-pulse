@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Pipeline Pulse — a local-first CI/CD project dashboard.">
+  <title>Pipeline Pulse — Delivery overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Pipeline Pulse home">
+        <span class="brand-mark">P<span>•</span></span>
+        <span>pipeline<span class="brand-light">pulse</span></span>
+      </a>
+      <div class="workspace-label">WORKSPACE</div>
+      <a class="nav-item active" href="#overview"><span class="nav-icon">▦</span> Overview</a>
+      <a class="nav-item" href="#pipeline"><span class="nav-icon">⌁</span> Pipelines <span class="nav-count">3</span></a>
+      <a class="nav-item" href="#deployments"><span class="nav-icon">⇧</span> Deployments</a>
+      <a class="nav-item" href="#services"><span class="nav-icon">◈</span> Services</a>
+      <div class="sidebar-bottom">
+        <div class="help-card">
+          <div class="help-icon">✦</div>
+          <strong>Ship with confidence.</strong>
+          <p>A tiny demo app with a real CI/CD workflow.</p>
+          <a href="https://docs.docker.com/" target="_blank" rel="noreferrer">Explore Docker docs ↗</a>
+        </div>
+        <div class="profile">
+          <div class="avatar">PP</div>
+          <div><strong>Project workspace</strong><small>Local environment</small></div>
+          <span class="dots">•••</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div class="breadcrumb">Workspace <span>/</span> <strong>Overview</strong></div>
+        <div class="top-actions"><span class="live-dot"></span><span>Local demo</span><button class="icon-button" aria-label="Notifications">♧</button><div class="top-avatar">A</div></div>
+      </header>
+
+      <section class="welcome">
+        <div>
+          <div class="eyebrow"><span class="spark">✳</span> DELIVERY CONTROL CENTER</div>
+          <h1>Good morning. <span>Let’s ship.</span></h1>
+          <p class="subheading">A clear view of your build, test, and deployment journey.</p>
+        </div>
+        <button class="primary-button" id="run-button"><span>▶</span> Run demo pipeline</button>
+      </section>
+
+      <section class="stats-grid" aria-label="Project summary">
+        <article class="stat-card">
+          <div class="stat-top"><span>Pipeline success</span><span class="stat-icon violet">⌁</span></div>
+          <div class="stat-value">98. <small>6%</small></div>
+          <div class="stat-foot"><span class="trend">↗ 4.2%</span> <span>vs. last 30 days</span></div>
+          <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-top"><span>Average build time</span><span class="stat-icon blue">◷</span></div>
+          <div class="stat-value">2m <small>14s</small></div>
+          <div class="stat-foot"><span class="trend">↘ 12%</span> <span>faster this week</span></div>
+          <div class="sparkline"><svg viewBox="0 0 220 42" role="img" aria-label="Build time trending down"><path d="M2 8 C25 12 25 28 49 21 S76 13 93 25 S121 30 139 18 S166 34 184 24 S203 16 218 8" /></svg></div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-top"><span>Active services</span><span class="stat-icon green">◈</span></div>
+          <div class="stat-value">03 <small>/ 03</small></div>
+          <div class="stat-foot"><span class="status-pill"><i></i> All operational</span></div>
+          <div class="service-dots"><i></i><i></i><i></i><span>Frontend · API · Database</span></div>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel pipeline-panel" id="pipeline">
+          <div class="panel-heading"><div><div class="eyebrow">AUTOMATION</div><h2>Latest pipeline</h2></div><a href="#pipeline">View workflow <span>↗</span></a></div>
+          <div class="pipeline-meta"><div><span class="run-indicator"></span><strong id="run-title">#108 · main</strong><span class="tag success" id="run-status">Passed</span></div><span id="run-time">Today, 10:42 AM</span></div>
+          <div class="pipeline-steps">
+            <div class="step complete"><span class="step-check">✓</span><div><strong>Source</strong><small>Checkout repository</small></div><time>4s</time></div>
+            <div class="step complete"><span class="step-check">✓</span><div><strong>Test</strong><small>Unit tests passed · 3/3</small></div><time>8s</time></div>
+            <div class="step complete"><span class="step-check">✓</span><div><strong>Build</strong><small>Docker image created</small></div><time>31s</time></div>
+            <div class="step complete"><span class="step-check">✓</span><div><strong>Publish</strong><small>Image pushed to registry</small></div><time>18s</time></div>
+            <div class="step-line"></div>
+          </div>
+          <div class="pipeline-footer"><span><b>Commit</b> 8f2c1a7 · Update dashboard UI</span><span class="duration">Total 1m 01s</span></div>
+        </article>
+
+        <article class="panel deploy-panel" id="deployments">
+          <div class="panel-heading"><div><div class="eyebrow">RELEASES</div><h2>Latest deployment</h2></div><span class="tag live">LIVE</span></div>
+          <div class="deploy-visual"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="rocket">↗</div><span class="orbit-dot dot-one"></span><span class="orbit-dot dot-two"></span></div>
+          <h3>Production is looking good.</h3>
+          <p>Your latest image is running locally in Docker.</p>
+          <div class="deploy-details"><span>VERSION <strong>v1.0.8</strong></span><span>ENVIRONMENT <strong>LOCAL</strong></span></div>
+          <div class="deploy-link"><span class="link-dot"></span> localhost:3000 <button id="copy-url" aria-label="Copy local URL">▢</button></div>
+        </article>
+      </section>
+
+      <section class="panel services-panel" id="services">
+        <div class="panel-heading"><div><div class="eyebrow">INFRASTRUCTURE</div><h2>Service health</h2></div><span class="updated">Updated just now</span></div>
+        <div class="service-table">
+          <div class="service-row service-header"><span>SERVICE</span><span>STATUS</span><span>IMAGE</span><span>PORT</span><span>UPTIME</span></div>
+          <div class="service-row"><div class="service-name"><span class="service-logo frontend">▣</span><span><strong>Web frontend</strong><small>Static UI · Nginx</small></span></div><span class="health"><i></i> Healthy</span><span class="mono">pipeline-pulse:latest</span><span class="mono">3000:3000</span><span>99.9%</span></div>
+          <div class="service-row"><div class="service-name"><span class="service-logo api">⌘</span><span><strong>Application API</strong><small>Node.js server</small></span></div><span class="health"><i></i> Healthy</span><span class="mono">pipeline-pulse:latest</span><span class="mono">/health</span><span>99.8%</span></div>
+          <div class="service-row"><div class="service-name"><span class="service-logo db">◉</span><span><strong>Data store</strong><small>Demo service status</small></span></div><span class="health"><i></i> Healthy</span><span class="mono">Local runtime</span><span class="mono">—</span><span>100%</span></div>
+        </div>
+      </section>
+
+      <footer><span>© 2026 Pipeline Pulse</span><span>Built for learning · <a href="https://github.com/features/actions" target="_blank" rel="noreferrer">Powered by GitHub Actions ↗</a></span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

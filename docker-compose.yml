@@ -1,0 +1,10 @@
+services:
+  pipeline-pulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pipeline-pulse:local
+    container_name: pipeline-pulse
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
